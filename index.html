@@ -886,31 +886,24 @@
         }
 
         async function chatWithGemini(message) {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+            // Send to backend - saves to Neon DB
+            const response = await fetch(`${API_BASE}/chat`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                    'x-gemini-api-key': apiKey
                 },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: message
-                        }]
-                    }],
-                    generationConfig: {
-                        temperature: 0.9,
-                        maxOutputTokens: 2048
-                    }
-                })
+                body: JSON.stringify({ message })
             });
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error?.message || 'API Error');
+                throw new Error(error.error || 'API Error');
             }
 
             const data = await response.json();
-            return data.candidates[0].content.parts[0].text;
+            return data.response;
         }
 
         function addMessage(text, sender) {

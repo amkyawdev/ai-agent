@@ -1,17 +1,17 @@
 // Firebase Auth Middleware
 require('dotenv').config();
 const admin = require('firebase-admin');
+const { saveUser } = require('../config/database');
 
 // Initialize Firebase Admin
 let firebaseInitialized = false;
 
 try {
-  // Check if already initialized
-  if (!admin.apps.length) {
+  if (!admin.apps.length && process.env.FIREBASE_PROJECT_ID) {
     admin.initializeApp({
       credential: admin.credential.cert({
         type: 'service_account',
-        project_id: process.env.FIREBASE_PROJECT_ID || 'smart-burme-app',
+        project_id: process.env.FIREBASE_PROJECT_ID,
         private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
         private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
         client_email: process.env.FIREBASE_CLIENT_EMAIL,
@@ -52,6 +52,9 @@ const verifyToken = async (req, res, next) => {
     // Verify with Firebase Admin
     const decodedToken = await admin.auth().verifyIdToken(token);
     
+    // Save user to database
+    await saveUser(decodedToken.uid, decodedToken.email || '');
+    
     req.user = {
       uid: decodedToken.uid,
       email: decodedToken.email || '',
@@ -84,25 +87,8 @@ const getUserByUID = async (uid) => {
   }
 };
 
-// Register/Login via Firebase (handled client-side)
-// These are placeholder functions
-const registerUser = async (email, password) => {
-  throw new Error('ဤအပိုင်းသည် Firebase ဖြင့် လုပ်ပါရန်။');
-};
-
-const loginUser = async (email, password) => {
-  throw new Error('ဤအပိုင်းသည် Firebase ဖြင့် လုပ်ပါရန်။');
-};
-
-const resetPassword = async (email) => {
-  throw new Error('ဤအပိုင်းသည် Firebase ဖြင့် လုပ်ပါရန်။');
-};
-
 module.exports = {
   verifyToken,
-  registerUser,
-  loginUser,
-  resetPassword,
   getUserByUID,
   firebaseInitialized
 };
