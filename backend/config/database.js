@@ -1,30 +1,65 @@
-// In-memory database storage
+const { Pool } = require('pg');
+require('dotenv').config();
+
+// Neon PostgreSQL connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+let useMemory = false;
+
+// In-memory fallback storage
 const memoryStorage = {
   users: new Map(),
   sessions: new Map(),
   messages: new Map()
 };
 
-let useMemory = true;
-
 async function connectDB() {
-  console.log('📦 In-memory storage အသုံးပါရန်။');
-  return null;
+  if (!process.env.DATABASE_URL) {
+    console.log('📦 In-memory storage အသုံးပါရန်။ (No DATABASE_URL)');
+    useMemory = true;
+    return null;
+  }
+  
+  try {
+    const client = await pool.connect();
+    await client.query('SELECT 1');
+    client.release();
+    console.log('🟢 PostgreSQL (Neon) ချိတ်ဆက်ပါရန်။');
+    return pool;
+  } catch (error) {
+    console.warn('⚠️ PostgreSQL မချိတ်ဆက်ရသဖြင့်အသုံးပါရန်။', error.message);
+    console.log('📦 In-memory storage အသုံးပါရန်။');
+    useMemory = true;
+    return null;
+  }
 }
 
 function getDB() {
-  return null;
+  if (useMemory) return null;
+  return pool;
 }
 
 function isUsingMemory() {
-  return true;
+  return useMemory;
 }
 
 async function closeDB() {
-  console.log('🔴 In-memory storage ပိတ်ပါရန်။');
+  try {
+    if (pool) {
+      await pool.end();
+      console.log('🔴 PostgreSQL ပိတ်ပါရန်။');
+    }
+  } catch (error) {
+    console.error('PostgreSQL Close Error:', error.message);
+  }
 }
 
-// Memory storage helpers
+// Memory storage helpers (fallback)
 function memoryFindOne(collection, query) {
   const data = memoryStorage[collection];
   if (!data) return null;
@@ -129,6 +164,7 @@ module.exports = {
   getDB,
   closeDB,
   isUsingMemory,
+  pool,
   memoryStorage,
   memoryFindOne,
   memoryFind,
