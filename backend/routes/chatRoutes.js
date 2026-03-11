@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const chatController = require('../controllers/chatController');
+const { verifyToken } = require('../middleware/auth');
 
 // Validation middleware
 const validateRequest = (req, res, next) => {
@@ -13,23 +14,22 @@ const validateRequest = (req, res, next) => {
 };
 
 // POST /api/chat - Send message
-// Headers: Authorization: Bearer <firebase_id_token>
 router.post('/', 
-  require('../middleware/auth').verifyToken,
+  verifyToken,
   body('message').trim().notEmpty().withMessage('စာရိုက်ပါရန်။'),
   validateRequest,
   chatController.sendMessage
 );
 
-// GET /api/chat/history/:sessionId - Get chat history
-router.get('/history/:sessionId',
-  require('../middleware/auth').verifyToken,
+// GET /api/chat/history - Get chat history
+router.get('/history',
+  verifyToken,
   chatController.getHistory
 );
 
-// POST /api/chat/clear/:sessionId - Clear chat history
-router.post('/clear/:sessionId',
-  require('../middleware/auth').verifyToken,
+// POST /api/chat/clear - Clear chat history
+router.post('/clear',
+  verifyToken,
   chatController.clearHistory
 );
 

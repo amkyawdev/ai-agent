@@ -6,168 +6,387 @@
     <title>Burme Chat - ဗွီမ်ချက်ခ်</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;500;700&family=Noto+Sans+Myanmar:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #e63946;
+            --primary-dark: #c1121f;
+            --secondary: #f4a261;
+            --background: #0f0f23;
+            --surface: #1a1a2e;
+            --surface-light: #16213e;
+            --user-bubble: #e63946;
+            --ai-bubble: #16213e;
+            --text: #eaeaea;
+            --text-muted: #a0a0a0;
+            --border: #2d2d44;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --glow: rgba(230, 57, 70, 0.3);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Pyidaungsu', 'Padauk', sans-serif;
-        }
-
-        :root {
-            --primary: #B22222;
-            --secondary: #FFD700;
-            --background: #F5F5F5;
-            --user-bubble: #B22222;
-            --ai-bubble: #FFFFFF;
-            --text: #333333;
-            --text-light: #FFFFFF;
-            --shadow: rgba(0, 0, 0, 0.1);
+            font-family: 'Pyidaungsu', 'Noto Sans Myanmar', sans-serif;
         }
 
         body {
             background: var(--background);
             min-height: 100vh;
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(230, 57, 70, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(244, 162, 97, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(22, 33, 62, 0.5) 0%, transparent 70%);
+            animation: bgMove 20s ease-in-out infinite;
+        }
+
+        @keyframes bgMove {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(2%, 2%) rotate(1deg); }
+            66% { transform: translate(-2%, -1%) rotate(-1deg); }
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        .screen.active {
             display: flex;
             flex-direction: column;
         }
 
         /* Welcome Screen */
         #welcome-screen {
-            display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #B22222 0%, #8B0000 100%);
-            position: relative;
-            overflow: hidden;
-        }
-
-        #welcome-screen::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: 
-                radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 50%);
-            pointer-events: none;
+            padding: 20px;
+            text-align: center;
         }
 
         .welcome-content {
-            text-align: center;
-            z-index: 1;
-            padding: 20px;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo-container {
+            margin-bottom: 30px;
         }
 
         .logo {
-            font-size: 80px;
-            margin-bottom: 20px;
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            margin: 0 auto 20px;
+            box-shadow: 0 20px 60px var(--glow);
             animation: float 3s ease-in-out infinite;
         }
 
         @keyframes float {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-15px); }
         }
 
         .app-title {
-            font-size: 42px;
-            color: var(--secondary);
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .app-subtitle {
             font-size: 18px;
-            color: rgba(255, 255, 255, 0.9);
+            color: var(--text-muted);
             margin-bottom: 40px;
         }
 
-        .start-btn {
-            background: var(--secondary);
-            color: #B22222;
+        .btn {
+            padding: 16px 40px;
+            font-size: 18px;
+            font-weight: 600;
             border: none;
-            padding: 18px 50px;
-            font-size: 22px;
-            font-weight: bold;
             border-radius: 50px;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin: 8px;
         }
 
-        .start-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 10px 30px var(--glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px var(--glow);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Auth Screen */
+        #auth-screen {
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            background: var(--surface);
+            padding: 40px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-header h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .auth-header p {
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            background: var(--background);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-full {
+            width: 100%;
+            margin: 8px 0;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-muted);
+        }
+
+        .auth-footer a {
+            color: var(--primary);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
         }
 
         /* Chat Screen */
         #chat-screen {
-            display: none;
-            flex-direction: column;
             height: 100vh;
-            background: var(--background);
         }
 
         .chat-header {
-            background: linear-gradient(135deg, #B22222 0%, #8B0000 100%);
-            color: var(--text-light);
+            background: var(--surface);
             padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 10px var(--shadow);
-            z-index: 100;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .chat-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
         }
 
         .chat-header h1 {
-            font-size: 24px;
+            font-size: 20px;
+        }
+
+        .user-info {
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .header-actions {
-            display: flex;
-            gap: 15px;
+        .user-email {
+            font-size: 14px;
+            color: var(--text-muted);
         }
 
-        .header-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
+        .logout-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
-            transition: background 0.3s;
+            transition: all 0.3s;
         }
 
-        .header-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .logout-btn:hover {
+            border-color: var(--error);
+            color: var(--error);
         }
 
+        /* API Key Modal */
+        .api-key-section {
+            background: var(--surface-light);
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .api-key-section input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 14px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .api-key-section input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-small {
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+
+        /* Chat Container */
         .chat-container {
             flex: 1;
             overflow-y: auto;
             padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 16px;
+            scroll-behavior: smooth;
         }
 
         .message {
-            max-width: 75%;
-            padding: 12px 18px;
+            max-width: 80%;
+            padding: 14px 18px;
             border-radius: 18px;
             position: relative;
             word-wrap: break-word;
             animation: fadeIn 0.3s ease;
+            line-height: 1.6;
         }
 
         @keyframes fadeIn {
@@ -177,38 +396,34 @@
 
         .message.user {
             align-self: flex-end;
-            background: var(--user-bubble);
-            color: var(--text-light);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
             border-bottom-right-radius: 5px;
         }
 
         .message.ai {
             align-self: flex-start;
-            background: var(--ai-bubble);
+            background: var(--surface);
             color: var(--text);
+            border: 1px solid var(--border);
             border-bottom-left-radius: 5px;
-            box-shadow: 0 2px 8px var(--shadow);
         }
 
         .message .timestamp {
             font-size: 11px;
             opacity: 0.7;
-            margin-top: 5px;
+            margin-top: 8px;
             display: block;
-        }
-
-        .message.user .timestamp {
-            text-align: right;
         }
 
         /* Typing Indicator */
         .typing-indicator {
             display: none;
             align-self: flex-start;
-            background: var(--ai-bubble);
-            padding: 15px 20px;
+            background: var(--surface);
+            padding: 16px 20px;
             border-radius: 18px;
-            box-shadow: 0 2px 8px var(--shadow);
+            border: 1px solid var(--border);
             border-bottom-left-radius: 5px;
         }
 
@@ -220,7 +435,7 @@
         .typing-dot {
             width: 8px;
             height: 8px;
-            background: #999;
+            background: var(--text-muted);
             border-radius: 50%;
             animation: bounce 1.4s infinite ease-in-out;
         }
@@ -236,18 +451,20 @@
 
         /* Input Area */
         .input-area {
-            padding: 15px 20px;
-            background: white;
+            padding: 20px;
+            background: var(--surface);
             display: flex;
-            gap: 10px;
-            box-shadow: 0 -2px 10px var(--shadow);
+            gap: 12px;
+            border-top: 1px solid var(--border);
         }
 
         .message-input {
             flex: 1;
-            padding: 15px 20px;
-            border: 2px solid #ddd;
+            padding: 16px 20px;
+            background: var(--background);
+            border: 2px solid var(--border);
             border-radius: 30px;
+            color: var(--text);
             font-size: 16px;
             outline: none;
             transition: border-color 0.3s;
@@ -258,802 +475,502 @@
         }
 
         .send-btn {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
             border: none;
-            width: 50px;
-            height: 50px;
+            width: 54px;
+            height: 54px;
             border-radius: 50%;
             cursor: pointer;
             font-size: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.3s, background 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px var(--glow);
         }
 
         .send-btn:hover {
             transform: scale(1.1);
-            background: #8B0000;
+            box-shadow: 0 6px 20px var(--glow);
         }
 
         .send-btn:disabled {
-            background: #ccc;
+            background: var(--border);
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
 
-        /* Settings Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
         }
 
-        .modal.active {
-            display: flex;
+        ::-webkit-scrollbar-track {
+            background: var(--background);
         }
 
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 450px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
         }
 
-        .modal-content h2 {
-            color: var(--primary);
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text);
-            font-weight: 500;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 16px;
-            outline: none;
-        }
-
-        .form-group input:focus {
-            border-color: var(--primary);
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        .modal-btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-
-        .modal-btn.cancel {
-            background: #eee;
-            color: var(--text);
-        }
-
-        .modal-btn.save {
+        ::-webkit-scrollbar-thumb:hover {
             background: var(--primary);
-            color: white;
-        }
-
-        .modal-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Dark Mode */
-        body.dark-mode {
-            --background: #1a1a2e;
-            --ai-bubble: #2a2a3e;
-            --text: #e0e0e0;
-            --shadow: rgba(0, 0, 0, 0.3);
-        }
-
-        body.dark-mode .input-area {
-            background: #1a1a2e;
-        }
-
-        body.dark-mode .message-input {
-            background: #2a2a3e;
-            border-color: #3a3a4e;
-            color: #e0e0e0;
-        }
-
-        body.dark-mode .modal-content {
-            background: #2a2a3e;
-        }
-
-        body.dark-mode .form-group input {
-            background: #1a1a2e;
-            border-color: #3a3a4e;
-            color: #e0e0e0;
-        }
-
-        body.dark-mode .form-group label,
-        body.dark-mode .modal-content h2 {
-            color: #e0e0e0;
-        }
-
-        body.dark-mode .modal-btn.cancel {
-            background: #3a3a4e;
-            color: #e0e0e0;
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            color: #999;
-            padding: 40px;
-        }
-
-        .empty-state-icon {
-            font-size: 60px;
-            margin-bottom: 15px;
-        }
-
-        /* Error Message */
-        .error-message {
-            background: #ffebee;
-            color: #c62828;
-            padding: 10px 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin: 10px 20px;
         }
 
         /* Responsive */
         @media (max-width: 600px) {
             .app-title {
-                font-size: 32px;
+                font-size: 36px;
             }
-
-            .logo {
-                font-size: 60px;
+            
+            .auth-container {
+                padding: 30px 20px;
             }
-
+            
             .message {
                 max-width: 90%;
             }
-
-            .chat-header h1 {
-                font-size: 18px;
+            
+            .chat-header {
+                padding: 12px 15px;
             }
-        }
-
-        /* Auth Screen */
-        #auth-screen {
-            display: none;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #B22222 0%, #8B0000 100%);
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .auth-container {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            text-align: center;
-        }
-
-        .auth-logo {
-            font-size: 60px;
-            margin-bottom: 15px;
-        }
-
-        .auth-title {
-            color: var(--primary);
-            font-size: 28px;
-            margin-bottom: 25px;
-        }
-
-        .auth-tabs {
-            display: flex;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #eee;
-        }
-
-        .auth-tab {
-            flex: 1;
-            padding: 12px;
-            background: none;
-            border: none;
-            font-size: 15px;
-            cursor: pointer;
-            color: #666;
-            transition: all 0.3s;
-        }
-
-        .auth-tab.active {
-            color: var(--primary);
-            border-bottom: 2px solid var(--primary);
-            font-weight: bold;
-        }
-
-        .auth-form input {
-            width: 100%;
-            padding: 14px 15px;
-            margin-bottom: 15px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        .auth-form input:focus {
-            border-color: var(--primary);
-        }
-
-        .auth-submit {
-            width: 100%;
-            padding: 14px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .auth-submit:hover {
-            background: #8B0000;
-        }
-
-        .auth-error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
-
-        /* Dark Mode Auth */
-        body.dark-mode .auth-container {
-            background: #2a2a3e;
-        }
-
-        body.dark-mode .auth-title {
-            color: var(--secondary);
-        }
-
-        body.dark-mode .auth-tabs {
-            border-bottom-color: #3a3a4e;
-        }
-
-        body.dark-mode .auth-tab {
-            color: #aaa;
-        }
-
-        body.dark-mode .auth-tab.active {
-            color: var(--secondary);
-            border-bottom-color: var(--secondary);
-        }
-
-        body.dark-mode .auth-form input {
-            background: #1a1a2e;
-            border-color: #3a3a4e;
-            color: #e0e0e0;
-        }
-
-        body.dark-mode .auth-error {
-            background: #3a2a2a;
-            color: #e57373;
+            
+            .user-email {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="bg-animation"></div>
+
     <!-- Welcome Screen -->
-    <div id="welcome-screen">
+    <div id="welcome-screen" class="screen active">
         <div class="welcome-content">
-            <div class="logo">💬</div>
+            <div class="logo-container">
+                <div class="logo">💬</div>
+            </div>
             <h1 class="app-title">Burme Chat</h1>
-            <p class="app-subtitle">မြန်မာစာလို စကားပြောရန် AI ချက်ခ်</p>
-            <button class="start-btn" onclick="startChat()">မြန်မာလို စကားပြောမယ်</button>
-        </div>
-    </div>
-
-    <!-- Chat Screen -->
-    <div id="chat-screen">
-        <div class="chat-header">
-            <h1>💬 Burme Chat</h1>
-            <div class="header-actions">
-                <button class="header-btn" onclick="toggleTheme()">🌓</button>
-                <button class="header-btn" onclick="clearChat()">🗑️</button>
-                <button class="header-btn" onclick="openSettings()">⚙️</button>
-                <button class="header-btn" onclick="logout()">🚪</button>
-            </div>
-        </div>
-
-        <div class="chat-container" id="chat-container">
-            <div class="empty-state" id="empty-state">
-                <div class="empty-state-icon">💬</div>
-                <p>မြန်မာလို စာရိုက်ပြောပါရန်...</p>
-            </div>
-        </div>
-
-        <div class="typing-indicator" id="typing-indicator">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-        </div>
-
-        <div class="input-area">
-            <input type="text" class="message-input" id="message-input" placeholder="စာရိုက်ပါရန်..." onkeypress="handleKeyPress(event)">
-            <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div class="modal" id="settings-modal">
-        <div class="modal-content">
-            <h2>⚙️ အပြင်အဆင်များ</h2>
-            <div class="form-group">
-                <label for="api-key">Google Gemini API Key</label>
-                <input type="password" id="api-key" placeholder="AIzaSy...">
-            </div>
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" id="dark-mode-toggle" onchange="toggleTheme()"> အနက်ရော်မုဒ်
-                </label>
-            </div>
-            <div class="modal-buttons">
-                <button class="modal-btn cancel" onclick="closeSettings()">မလုပ်ပါန်း</button>
-                <button class="modal-btn save" onclick="saveSettings()">သိမ်းမယ်</button>
-            </div>
+            <p class="app-subtitle">မြန်မာစကားပါးလိုက်ပါရန် 🤖</p>
+            <button class="btn btn-primary" onclick="showAuth('login')">ဝင်ရောက်ပါရန်</button>
+            <br>
+            <button class="btn btn-secondary" onclick="showAuth('register')">မှတ်ပုံတင်ပါရန်</button>
         </div>
     </div>
 
     <!-- Auth Screen -->
-    <div id="auth-screen" style="display:none;">
+    <div id="auth-screen" class="screen">
         <div class="auth-container">
-            <div class="auth-logo">💬</div>
-            <h1 class="auth-title">Burme Chat</h1>
-            
-            <div class="auth-tabs">
-                <button class="auth-tab active" data-form="login">ဝင်မယ်</button>
-                <button class="auth-tab" data-form="register">မှတ်ပုံတင်</button>
-                <button class="auth-tab" data-form="reset">စကားဝှက်မေ့တယ်</button>
+            <div class="auth-header">
+                <h2 id="auth-title">ဝင်ရောက်ပါရန်</h2>
+                <p id="auth-subtitle">Burme Chat သို့ မြန်မာစကားပါးလိုက်ပါရန်</p>
             </div>
-
-            <div class="auth-error" id="auth-error" style="display:none;"></div>
-
-            <!-- Login Form -->
-            <form id="login-form" class="auth-form">
-                <input type="email" id="login-email" placeholder="အီးမေးလ်" required>
-                <input type="password" id="login-password" placeholder="စကားဝှက်" required>
-                <button type="submit" class="auth-submit">ဝင်မယ်</button>
+            
+            <div id="auth-error" class="error-message"></div>
+            
+            <form id="auth-form" onsubmit="handleAuth(event)">
+                <div class="form-group">
+                    <label>အီးမေးလ်</label>
+                    <input type="email" id="email" required placeholder="အီးမေးလ်လိပ်စာ">
+                </div>
+                <div class="form-group" id="password-group">
+                    <label>စကားဝှက်</label>
+                    <input type="password" id="password" required placeholder="စကားဝှက်">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" id="auth-btn">ဝင်ရောက်ပါရန်</button>
             </form>
-
-            <!-- Register Form -->
-            <form id="register-form" class="auth-form" style="display:none;">
-                <input type="email" id="register-email" placeholder="အီးမေးလ်" required>
-                <input type="password" id="register-password" placeholder="စကားဝှက် (အနည်းဆုံး ၆ လုံး)" minlength="6" required>
-                <button type="submit" class="auth-submit">မှတ်ပုံတင်မယ်</button>
-            </form>
-
-            <!-- Reset Form -->
-            <form id="reset-form" class="auth-form" style="display:none;">
-                <input type="email" id="reset-email" placeholder="အီးမေးလ်" required>
-                <button type="submit" class="auth-submit">ပါဆယ်လိုက်ပါရန်</button>
-            </form>
+            
+            <div class="auth-footer">
+                <p id="auth-footer-text">
+                    <span id="auth-footer-p1">အကောင့်မရှိသေးပါသည်လား?</span>
+                    <a onclick="toggleAuthMode()"><span id="auth-footer-link">မှတ်ပုံတင်ပါရန်</span></a>
+                </p>
+                <p id="reset-link" style="margin-top: 10px; display: none;">
+                    <a onclick="showResetPassword()">စကားဝှက်ပါဆယ်လိုက်ပါရန်</a>
+                </p>
+            </div>
         </div>
     </div>
 
-    <script type="module">
-      // Firebase Configuration
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-      import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-      const firebaseConfig = {
-        apiKey: "AIzaSyA5BS_7xfD1-VhGYlBfkKLBkHUKnkZXBsg",
-        authDomain: "amkyawdev.firebaseapp.com",
-        projectId: "amkyawdev",
-        storageBucket: "amkyawdev.firebasestorage.app",
-        messagingSenderId: "242883286611",
-        appId: "1:242883286611:web:a61ea6d9d294c49b0618a6",
-        measurementId: "G-VF8XVGCWM2"
-      };
-
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-
-      // API Configuration
-      const API_BASE = 'https://burme-chat.onrender.com/api';
-      // For local: const API_BASE = 'http://localhost:3000/api';
-
-      // System Prompt for Burmese
-      const SYSTEM_PROMPT = "You are Burme Chat, an AI assistant that communicates exclusively in Burmese (Myanmar language). Respond only in Burmese, be culturally sensitive, and help users with their questions in Burmese. Never respond in English.";
-
-      // State
-      let currentUser = null;
-      let apiKey = localStorage.getItem('gemini_api_key') || '';
-      let chatHistory = JSON.parse(localStorage.getItem('chat_history')) || [];
-      let isDarkMode = localStorage.getItem('dark_mode') === 'true';
-
-      // DOM Elements
-      const welcomeScreen = document.getElementById('welcome-screen');
-      const authScreen = document.getElementById('auth-screen');
-      const chatScreen = document.getElementById('chat-screen');
-      const chatContainer = document.getElementById('chat-container');
-      const messageInput = document.getElementById('message-input');
-      const sendBtn = document.getElementById('send-btn');
-      const typingIndicator = document.getElementById('typing-indicator');
-      const settingsModal = document.getElementById('settings-modal');
-      const apiKeyInput = document.getElementById('api-key');
-      const darkModeToggle = document.getElementById('dark-mode-toggle');
-      const loginForm = document.getElementById('login-form');
-      const registerForm = document.getElementById('register-form');
-      const resetForm = document.getElementById('reset-form');
-      const authTabs = document.querySelectorAll('.auth-tab');
-      const authError = document.getElementById('auth-error');
-
-      // Initialize
-      function init() {
-        if (apiKey) apiKeyInput.value = apiKey;
-        if (isDarkMode) {
-          document.body.classList.add('dark-mode');
-          darkModeToggle.checked = true;
-        }
-        loadChatHistory();
-        
-        // Check auth state
-        onAuthStateChanged(auth, (user) => {
-          if (user) {
-            currentUser = user;
-            user.getIdToken().then(token => {
-              localStorage.setItem('auth_token', token);
-              checkApiKeyStatus(token);
-            });
-          } else {
-            showAuthScreen();
-          }
-        });
-      }
-
-      // Check API Key status
-      async function checkApiKeyStatus(token) {
-        try {
-          const res = await fetch(`${API_BASE}/auth/apikey`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const data = await res.json();
-          if (!data.hasApiKey) {
-            openSettings();
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      }
-
-      // Show screens
-      function showAuthScreen() {
-        welcomeScreen.style.display = 'none';
-        chatScreen.style.display = 'none';
-        authScreen.style.display = 'flex';
-      }
-
-      function showChatScreen() {
-        authScreen.style.display = 'none';
-        welcomeScreen.style.display = 'none';
-        chatScreen.style.display = 'flex';
-        messageInput.focus();
-      }
-
-      // Auth tab switching
-      authTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          authTabs.forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          
-          loginForm.style.display = 'none';
-          registerForm.style.display = 'none';
-          resetForm.style.display = 'none';
-          authError.style.display = 'none';
-          
-          document.getElementById(`${tab.dataset.form}-form`).style.display = 'block';
-        });
-      });
-
-      // Login
-      loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-        
-        try {
-          authError.style.display = 'none';
-          const userCred = await signInWithEmailAndPassword(auth, email, password);
-          const token = await userCred.user.getIdToken();
-          localStorage.setItem('auth_token', token);
-          currentUser = userCred.user;
-          showChatScreen();
-        } catch (error) {
-          authError.textContent = getAuthErrorMessage(error.code);
-          authError.style.display = 'block';
-        }
-      });
-
-      // Register
-      registerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('register-email').value;
-        const password = document.getElementById('register-password').value;
-        
-        try {
-          authError.style.display = 'none';
-          const userCred = await createUserWithEmailAndPassword(auth, email, password);
-          const token = await userCred.user.getIdToken();
-          localStorage.setItem('auth_token', token);
-          currentUser = userCred.user;
-          showChatScreen();
-          openSettings();
-        } catch (error) {
-          authError.textContent = getAuthErrorMessage(error.code);
-          authError.style.display = 'block';
-        }
-      });
-
-      // Password Reset
-      resetForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('reset-email').value;
-        
-        try {
-          authError.style.display = 'none';
-          await sendPasswordResetEmail(auth, email);
-          authError.textContent = 'ပါဆယ်လိုက်ပါရန်။ အီးမေးလ်စစ်ဆေးပါရန်။';
-          authError.style.color = 'green';
-          authError.style.display = 'block';
-        } catch (error) {
-          authError.textContent = getAuthErrorMessage(error.code);
-          authError.style.display = 'block';
-        }
-      });
-
-      function getAuthErrorMessage(code) {
-        const messages = {
-          'auth/email-already-in-use': 'ဤအီးမေးလ်သည် ရှိပြီးပါရန်။',
-          'auth/invalid-email': 'အီးမေးလ်ပါးလို့မရပါရန်။',
-          'auth/operation-not-allowed': 'ဤလုပ်ငန်းသည် မလုပ်သင့်ပါရန်။',
-          'auth/weak-password': 'စကားဝှက်သည် အားနည်းပါရန်။',
-          'auth/user-disabled': 'ဤအသုံးပါးလို့မရပါရန်။',
-          'auth/user-not-found': 'ဤအီးမေးလ်သည် မရှိပါရန်။',
-          'auth/wrong-password': 'စကားဝှက်မှားယွင်းပါရန်။',
-          'auth/invalid-credential': 'အီးမေးလ်သို့စကားဝှက်မှားယွင်းပါရန်။',
-          'auth/invalid-api-key': 'API Key မှားယွင်းပါရန်။',
-          'auth/too-many-requests': 'အလွန်အကျွံကြိုးစားပါရန်။ နောက်တစ်ခါ ကြိုးစားပါရန်။'
-        };
-        return messages[code] || 'မှားယွင်းပါရန်။';
-      }
-
-      // Start Chat
-      function startChat() {
-        if (!apiKey) {
-          openSettings();
-          return;
-        }
-        welcomeScreen.style.display = 'none';
-        showChatScreen();
-      }
-
-      // Load Chat History
-      function loadChatHistory() {
-        if (chatHistory.length === 0) {
-          document.getElementById('empty-state').style.display = 'block';
-          return;
-        }
-        document.getElementById('empty-state').style.display = 'none';
-        
-        chatHistory.forEach(msg => {
-          addMessage(msg.text, msg.sender, msg.timestamp);
-        });
-      }
-
-      // Add Message to UI
-      function addMessage(text, sender, timestamp = null) {
-        const time = timestamp || new Date().toLocaleTimeString('my-MM', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        });
-        
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}`;
-        messageDiv.innerHTML = `
-          ${text}
-          <span class="timestamp">${time}</span>
-        `;
-        
-        chatContainer.appendChild(messageDiv);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      }
-
-      // Handle Key Press
-      function handleKeyPress(event) {
-        if (event.key === 'Enter') sendMessage();
-      }
-
-      // Send Message
-      async function sendMessage() {
-        const text = messageInput.value.trim();
-        if (!text) return;
-        if (!currentUser) {
-          showAuthScreen();
-          return;
-        }
-
-        addMessage(text, 'user');
-        chatHistory.push({ text, sender: 'user', timestamp: new Date().toLocaleTimeString('my-MM') });
-        localStorage.setItem('chat_history', JSON.stringify(chatHistory));
-        
-        messageInput.value = '';
-        sendBtn.disabled = true;
-
-        typingIndicator.classList.add('active');
-        chatContainer.appendChild(typingIndicator);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-
-        try {
-          const token = await currentUser.getIdToken();
-          const response = await fetch(`${API_BASE}/chat`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ message: text })
-          });
-
-          const data = await response.json();
-          
-          typingIndicator.classList.remove('active');
-          
-          if (!response.ok) {
-            throw new Error(data.error || 'API Error');
-          }
-          
-          addMessage(data.reply, 'ai');
-          chatHistory.push({ text: data.reply, sender: 'ai', timestamp: new Date().toLocaleTimeString('my-MM') });
-          localStorage.setItem('chat_history', JSON.stringify(chatHistory));
-        } catch (error) {
-          typingIndicator.classList.remove('active');
-          showError("API အပါအဝင် မှားယွင်းပါရန်။ " + error.message);
-        }
-
-        sendBtn.disabled = false;
-        messageInput.focus();
-      }
-
-      // Show Error
-      function showError(message) {
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.textContent = message;
-        chatContainer.appendChild(errorDiv);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        
-        setTimeout(() => errorDiv.remove(), 5000);
-      }
-
-      // Open Settings
-      function openSettings() {
-        settingsModal.classList.add('active');
-        apiKeyInput.value = apiKey;
-      }
-
-      // Close Settings
-      function closeSettings() {
-        settingsModal.classList.remove('active');
-      }
-
-      // Save Settings
-      async function saveSettings() {
-        apiKey = apiKeyInput.value.trim();
-        
-        if (!currentUser) {
-          localStorage.setItem('gemini_api_key', apiKey);
-          closeSettings();
-          return;
-        }
-
-        try {
-          const token = await currentUser.getIdToken();
-          const res = await fetch(`${API_BASE}/auth/apikey`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ apiKey })
-          });
-          
-          const data = await res.json();
-          if (res.ok) {
-            localStorage.setItem('gemini_api_key', apiKey);
-            closeSettings();
-          } else {
-            alert(data.error || 'Error saving API key');
-          }
-        } catch (error) {
-          console.error(error);
-          localStorage.setItem('gemini_api_key', apiKey);
-          closeSettings();
-        }
-      }
-
-      // Toggle Theme
-      function toggleTheme() {
-        isDarkMode = !isDarkMode;
-        document.body.classList.toggle('dark-mode', isDarkMode);
-        localStorage.setItem('dark_mode', isDarkMode);
-        darkModeToggle.checked = isDarkMode;
-      }
-
-      // Clear Chat
-      function clearChat() {
-        if (confirm('စကားပြောခန်းအားလုံးဖျက်မှာလားခင်ဗျာ။')) {
-          chatHistory = [];
-          localStorage.removeItem('chat_history');
-          
-          chatContainer.innerHTML = `
-            <div class="empty-state" id="empty-state">
-              <div class="empty-state-icon">💬</div>
-              <p>မြန်မာလို စာရိုက်ပြောပါရန်...</p>
+    <!-- Reset Password Screen -->
+    <div id="reset-screen" class="screen">
+        <div class="auth-container">
+            <div class="auth-header">
+                <h2>စကားဝှက်ပါဆယ်လိုက်ပါရန်</h2>
+                <p>အီးမေးလ်သို့ ပါဆယ်လိုက်လင့်ပါဝင်ပါရန်။</p>
             </div>
-          `;
-        }
-      }
+            
+            <div id="reset-error" class="error-message"></div>
+            <div id="reset-success" class="error-message" style="display: none; background: rgba(46, 204, 113, 0.1); border-color: var(--success); color: var(--success);"></div>
+            
+            <form onsubmit="handleReset(event)">
+                <div class="form-group">
+                    <label>အီးမေးလ်</label>
+                    <input type="email" id="reset-email" required placeholder="အီးမေးလ်လိပ်စာ">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">ပါဆယ်လိုက်ပါရန်</button>
+            </form>
+            
+            <div class="auth-footer">
+                <a onclick="showAuth('login')">ပြန်သွားပါရန်</a>
+            </div>
+        </div>
+    </div>
 
-      // Logout
-      function logout() {
-        signOut(auth).then(() => {
-          currentUser = null;
-          localStorage.removeItem('auth_token');
-          chatHistory = [];
-          localStorage.removeItem('chat_history');
-          showAuthScreen();
+    <!-- Chat Screen -->
+    <div id="chat-screen" class="screen">
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <div class="chat-logo">💬</div>
+                <h1>Burme Chat</h1>
+            </div>
+            <div class="user-info">
+                <span class="user-email" id="user-email"></span>
+                <button class="logout-btn" onclick="logout()">ထွက်ရန်</button>
+            </div>
+        </div>
+        
+        <div class="api-key-section">
+            <span>🔑 Gemini API Key:</span>
+            <input type="password" id="api-key" placeholder="Gemini API Key ထည့်သွင်းပါရန်">
+            <button class="btn btn-primary btn-small" onclick="saveApiKey()">သိမ်းပါရန်</button>
+        </div>
+        
+        <div class="chat-container" id="chat-container">
+            <div class="message ai">
+                မင်္ဂလာမှတ်ပါရန်။ ကျွန်တော်သည် သင့်အကူအညီဖြစ်ပါရန်။ မြန်မာစကားနှင့် ပြောဆိုပါရန်။
+                <span class="timestamp">ယခု</span>
+            </div>
+            <div class="typing-indicator" id="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <input type="text" class="message-input" id="message-input" placeholder="မေးခွန်းရိုက်ပါရန်..." onkeypress="handleEnter(event)">
+            <button class="send-btn" onclick="sendMessage()" id="send-btn">➤</button>
+        </div>
+    </div>
+
+    <!-- API Configuration -->
+    <script>
+        // API Configuration
+        const API_BASE = 'http://localhost:3000/api';
+
+        // State
+        let currentUser = null;
+        let authMode = 'login';
+        let apiKey = localStorage.getItem('gemini_api_key') || '';
+        let authToken = localStorage.getItem('auth_token') || '';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for existing API key
+            if (apiKey) {
+                document.getElementById('api-key').value = apiKey;
+            }
+            
+            // Check auth state
+            if (authToken) {
+                verifyToken();
+            }
         });
-      }
 
-      // Initialize on load
-      init();
+        // Auth Functions
+        async function verifyToken() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    showChat();
+                    document.getElementById('user-email').textContent = currentUser.email;
+                } else {
+                    // Token invalid, clear
+                    localStorage.removeItem('auth_token');
+                    authToken = '';
+                }
+            } catch (error) {
+                console.error('Verify error:', error);
+            }
+        }
+
+        // Auth Functions
+        function showAuth(mode) {
+            authMode = mode;
+            document.getElementById('welcome-screen').classList.remove('active');
+            document.getElementById('reset-screen').classList.remove('active');
+            document.getElementById('auth-screen').classList.add('active');
+            
+            if (mode === 'login') {
+                document.getElementById('auth-title').textContent = 'ဝင်ရောက်ပါရန်';
+                document.getElementById('auth-btn').textContent = 'ဝင်ရောက်ပါရန်';
+                document.getElementById('auth-footer-p1').textContent = 'အကောင့်မရှိသေးပါသည်လား?';
+                document.getElementById('auth-footer-link').textContent = 'မှတ်ပုံတင်ပါရန်';
+                document.getElementById('reset-link').style.display = 'block';
+                document.getElementById('password-group').style.display = 'block';
+            } else {
+                document.getElementById('auth-title').textContent = 'မှတ်ပုံတင်ပါရန်';
+                document.getElementById('auth-btn').textContent = 'မှတ်ပုံတင်ပါရန်';
+                document.getElementById('auth-footer-p1').textContent = 'အကောင့်ရှိပါသည်လား?';
+                document.getElementById('auth-footer-link').textContent = 'ဝင်ရောက်ပါရန်';
+                document.getElementById('reset-link').style.display = 'none';
+            }
+            hideError();
+        }
+
+        function toggleAuthMode() {
+            showAuth(authMode === 'login' ? 'register' : 'login');
+        }
+
+        function showResetPassword() {
+            document.getElementById('auth-screen').classList.remove('active');
+            document.getElementById('reset-screen').classList.add('active');
+            hideError();
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            hideError();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const btn = document.getElementById('auth-btn');
+            btn.disabled = true;
+            btn.textContent = 'စောင့်ပါရန်...';
+            
+            try {
+                const endpoint = authMode === 'register' ? '/auth/register' : '/auth/login';
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'မှားယွင်းပါရန်။');
+                }
+                
+                if (authMode === 'register') {
+                    showToast('မှတ်ပုံတင်ပါရန်။ ဝင်ရောက်ပါပါရန်။');
+                    showAuth('login');
+                } else {
+                    // Login successful - save token
+                    authToken = data.user.token;
+                    localStorage.setItem('auth_token', authToken);
+                    currentUser = data.user;
+                    showChat();
+                    document.getElementById('user-email').textContent = currentUser.email;
+                }
+            } catch (error) {
+                showAuthError(error.message);
+            }
+            
+            btn.disabled = false;
+            btn.textContent = authMode === 'login' ? 'ဝင်ရောက်ပါရန်' : 'မှတ်ပုံတင်ပါရန်';
+        }
+
+        async function handleReset(e) {
+            e.preventDefault();
+            hideError();
+            
+            const email = document.getElementById('reset-email').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/reset`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'မှားယွင်းပါရန်။');
+                }
+                
+                document.getElementById('reset-error').style.display = 'none';
+                document.getElementById('reset-success').textContent = data.message;
+                document.getElementById('reset-success').style.display = 'block';
+            } catch (error) {
+                document.getElementById('reset-success').style.display = 'none';
+                document.getElementById('reset-error').textContent = error.message;
+                document.getElementById('reset-error').style.display = 'block';
+            }
+        }
+
+        function getAuthErrorMessage(code) {
+            return code || 'မှားယွင်းပါရန်။ နောက်တစ်ခါ ကြိုးစားပါရန်။';
+        }
+
+        function showAuthError(message) {
+            const errorEl = document.getElementById('auth-error');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('auth-error').style.display = 'none';
+            document.getElementById('reset-error').style.display = 'none';
+            document.getElementById('reset-success').style.display = 'none';
+        }
+
+        // Chat Functions
+        function showChat() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('chat-screen').classList.add('active');
+        }
+
+        async function logout() {
+            try {
+                // Clear local storage
+                localStorage.removeItem('auth_token');
+                authToken = '';
+                currentUser = null;
+                document.getElementById('chat-container').innerHTML = `
+                    <div class="message ai">
+                        မင်္ဂလာမှတ်ပါရန်။ ကျွန်တော်သည် သင့်အကူအညီဖြစ်ပါရန်။ မြန်မာစကားနှင့် ပြောဆိုပါရန်။
+                        <span class="timestamp">ယခု</span>
+                    </div>
+                `;
+                showWelcome();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        function showWelcome() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('welcome-screen').classList.add('active');
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('api-key').value.trim();
+            if (key) {
+                apiKey = key;
+                localStorage.setItem('gemini_api_key', key);
+                showToast('API Key သိမ်းပါရန်။');
+            }
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            if (!apiKey) {
+                showToast('🔑 Gemini API Key ထည့်သွင်းပါရန်။', 'error');
+                return;
+            }
+            
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Show typing indicator
+            const typingIndicator = document.getElementById('typing-indicator');
+            typingIndicator.classList.add('active');
+            scrollToBottom();
+            
+            try {
+                const response = await chatWithGemini(message);
+                
+                typingIndicator.classList.remove('active');
+                addMessage(response, 'ai');
+            } catch (error) {
+                typingIndicator.classList.remove('active');
+                addMessage('မှားယွင်းပါရန်။ ' + error.message, 'ai');
+            }
+            
+            scrollToBottom();
+        }
+
+        async function chatWithGemini(message) {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: message
+                        }]
+                    }],
+                    generationConfig: {
+                        temperature: 0.9,
+                        maxOutputTokens: 2048
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || 'API Error');
+            }
+
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        }
+
+        function addMessage(text, sender) {
+            const container = document.getElementById('chat-container');
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${sender}`;
+            messageEl.innerHTML = `
+                ${text}
+                <span class="timestamp">${getTime()}</span>
+            `;
+            container.insertBefore(messageEl, document.getElementById('typing-indicator'));
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chat-container');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function getTime() {
+            const now = new Date();
+            return now.getHours().toString().padStart(2, '0') + ':' + 
+                   now.getMinutes().toString().padStart(2, '0');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${type === 'error' ? 'var(--error)' : 'var(--success)'};
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                z-index: 10000;
+                animation: fadeIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
     </script>
 </body>
 </html>

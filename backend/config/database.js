@@ -1,77 +1,27 @@
-const { MongoClient } = require('mongodb');
-require('dotenv').config();
-
-// MongoDB Atlas connection - use environment variables
-const mongoUser = process.env.MONGODB_USER;
-const mongoPass = process.env.MONGODB_PASS;
-const clusterUrl = process.env.MONGODB_CLUSTER_URL;
-
-let uri = process.env.MONGODB_URI;
-if (!uri && mongoUser && mongoPass && clusterUrl) {
-  uri = `mongodb+srv://${mongoUser}:${encodeURIComponent(mongoPass)}@${clusterUrl}.mongodb.net/?retryWrites=true&w=majority`;
-}
-
-const client = new MongoClient(uri, {
-  maxPoolSize: 10,
-  minPoolSize: 1,
-});
-
-let db = null;
-let useMemory = false;
-
-// In-memory fallback storage
+// In-memory database storage
 const memoryStorage = {
   users: new Map(),
   sessions: new Map(),
   messages: new Map()
 };
 
-async function connectDB() {
-  try {
-    await client.connect();
-    db = client.db('burme_chat');
-    
-    // Test connection
-    await db.command({ ping: 1 });
-    
-    // Create indexes
-    await createIndexes();
-    
-    console.log('🟢 MongoDB ချိတ်ဆက်ပါရန်။');
-    return db;
-  } catch (error) {
-    console.warn('⚠️ MongoDB မချိတ်ဆက်ရသဖြင့်အသုံးပါရန်။', error.message);
-    console.log('📦 In-memory storage အသုံးပါရန်။');
-    useMemory = true;
-    return null;
-  }
-}
+let useMemory = true;
 
-async function createIndexes() {
-  if (!db) return;
-  
-  try {
-    await db.collection('users').createIndex({ uid: 1 }, { unique: true });
-    await db.collection('users').createIndex({ email: 1 }, { unique: true });
-    await db.collection('sessions').createIndex({ userId: 1 });
-    await db.collection('sessions').createIndex({ createdAt: -1 });
-    await db.collection('messages').createIndex({ sessionId: 1, createdAt: -1 });
-    console.log('📇 Indexes ဖန်တီးပါရန်။');
-  } catch (error) {
-    console.error('Index creation error:', error.message);
-  }
+async function connectDB() {
+  console.log('📦 In-memory storage အသုံးပါရန်။');
+  return null;
 }
 
 function getDB() {
-  if (useMemory) return null;
-  if (!db) {
-    throw new Error('Database မချိတ်ဆက်ရသေးပါရန်။');
-  }
-  return db;
+  return null;
 }
 
 function isUsingMemory() {
-  return useMemory;
+  return true;
+}
+
+async function closeDB() {
+  console.log('🔴 In-memory storage ပိတ်ပါရန်။');
 }
 
 // Memory storage helpers
@@ -108,7 +58,6 @@ function memoryFind(collection, query = {}, options = {}) {
     if (match) results.push(value);
   }
   
-  // Sort
   if (options.sort) {
     const sortKey = Object.keys(options.sort)[0];
     const sortOrder = options.sort[sortKey];
@@ -118,7 +67,6 @@ function memoryFind(collection, query = {}, options = {}) {
     });
   }
   
-  // Limit
   if (options.limit) {
     results = results.slice(0, options.limit);
   }
@@ -130,8 +78,8 @@ function memoryInsertOne(collection, document) {
   const data = memoryStorage[collection];
   if (!data) return { insertedId: 'memory-' + Date.now() };
   
-  const id = document._id || 'memory-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-  data.set(id, { ...document, _id: id });
+  const id = document.id || document.uid || 'memory-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+  data.set(id, { ...document, id });
   return { insertedId: id };
 }
 
@@ -176,21 +124,11 @@ function memoryDeleteOne(collection, query) {
   return { deletedCount: 0 };
 }
 
-async function closeDB() {
-  try {
-    await client.close();
-    console.log('🔴 MongoDB ပိတ်ပါရန်။');
-  } catch (error) {
-    console.error('MongoDB Close Error:', error.message);
-  }
-}
-
 module.exports = {
   connectDB,
   getDB,
   closeDB,
   isUsingMemory,
-  client,
   memoryStorage,
   memoryFindOne,
   memoryFind,
