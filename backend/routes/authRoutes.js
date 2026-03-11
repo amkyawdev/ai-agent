@@ -1,37 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const { body, validationResult } = require('express-validator');
-const authController = require('../controllers/authController');
 const { verifyToken } = require('../middleware/auth');
 
-// Validation middleware
-const validateRequest = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  next();
-};
+// Auth handled client-side via Firebase
+// Backend just verifies Firebase tokens
 
-// POST /api/auth/register - Register new user
-router.post('/register',
-  body('email').isEmail().withMessage('အီးမေးလ်ပါးလို့မရပါရန်။'),
-  body('password').isLength({ min: 6 }).withMessage('စကားဝှက်သည် အနည်းဆုံး စာလုံး ၆ လုံးလိုအပ်ပါရန်။'),
-  validateRequest,
-  authController.register
-);
+// GET /api/auth/me - Get current user (requires valid Firebase token)
+router.get('/me', verifyToken, async (req, res) => {
+  res.json({ 
+    user: {
+      uid: req.user.uid,
+      email: req.user.email
+    }
+  });
+});
 
-// POST /api/auth/login - Login
-router.post('/login', authController.login);
-
-// POST /api/auth/reset - Reset password
-router.post('/reset',
-  body('email').isEmail().withMessage('အီးမေးလ်ပါးလို့မရပါရန်။'),
-  validateRequest,
-  authController.reset
-);
-
-// GET /api/auth/me - Get current user
-router.get('/me', verifyToken, authController.me);
+// POST /api/auth/verify - Verify token
+router.post('/verify', verifyToken, async (req, res) => {
+  res.json({ valid: true, user: req.user });
+});
 
 module.exports = router;

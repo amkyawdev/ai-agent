@@ -1,27 +1,33 @@
-// Simple Chat Controller (In-Memory)
-const { chatWithGemini } = require('../services/geminiService');
-const { memoryStorage, memoryInsertOne, memoryFind } = require('../config/database');
+// Chat Controller with Neon DB
+const GeminiService = require('../services/geminiService');
+const { saveMessage, getMessages, clearMessages, saveUser } = require('../config/database');
 
-// POST /api/chat/message - Send message to Gemini
+// POST /api/chat - Send message to Gemini
 exports.sendMessage = async (req, res, next) => {
   try {
-    const { message } = req.body;
+    const { message, apiKey } = req.body;
     const userId = req.user.uid;
+    const userEmail = req.user.email;
 
     if (!message) {
       return res.status(400).json({ error: 'မေးခွန်းရိုက်ပါရန်။' });
     }
 
-    // Get AI response from Gemini
-    const aiResponse = await chatWithGemini(message);
+    // Get API key from header or body
+    const geminiApiKey = req.headers['x-gemini-api-key'] || apiKey;
+    if (!geminiApiKey) {
+      return res.status(400).json({ error: 'API Key လိုအပ်ပါရန်။' });
+    }
 
-    // Save to memory storage
-    memoryInsertOne('messages', {
-      userId,
-      message,
-      response: aiResponse,
-      timestamp: new Date()
-    });
+    // Save user if not exists
+    await saveUser(userId, userEmail);
+
+    // Get AI response from Gemini
+    const gemini = new GeminiService(geminiApiKey);
+    const aiResponse = await gemini.sendMessage(message);
+
+    // Save message to database
+    await saveMessage(userId, message, aiResponse);
 
     res.json({ response: aiResponse });
   } catch (error) {
@@ -35,7 +41,7 @@ exports.getHistory = async (req, res, next) => {
   try {
     const userId = req.user.uid;
     
-    const messages = memoryFind('messages', { userId }, { limit: 50 });
+    const messages = await getMessages(userId, 50);
     
     res.json({ messages });
   } catch (error) {
@@ -49,12 +55,7 @@ exports.clearHistory = async (req, res, next) => {
   try {
     const userId = req.user.uid;
     
-    // Clear messages for this user
-    memoryStorage.messages.forEach((msg, key) => {
-      if (msg.userId === userId) {
-        memoryStorage.messages.delete(key);
-      }
-    });
+    await clearMessages(userId);
     
     res.json({ message: 'စကားဝှက်ရှင်းပါရန်။' });
   } catch (error) {
