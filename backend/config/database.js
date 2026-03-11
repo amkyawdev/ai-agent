@@ -6,7 +6,9 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
-  }
+  },
+  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 3000
 });
 
 let useMemory = false;
