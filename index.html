@@ -657,29 +657,16 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-
+    <!-- API Configuration -->
     <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyA5BS_7xfD1-VhGYlBfkKLBkHUKnkZXBsg",
-            authDomain: "amkyawdev.firebaseapp.com",
-            projectId: "amkyawdev",
-            storageBucket: "amkyawdev.firebasestorage.app",
-            messagingSenderId: "242883286611",
-            appId: "1:242883286611:web:a61ea6d9d294c49b0618a6"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+        // API Configuration
+        const API_BASE = 'http://localhost:3000/api';
 
         // State
         let currentUser = null;
         let authMode = 'login';
         let apiKey = localStorage.getItem('gemini_api_key') || '';
+        let authToken = localStorage.getItem('auth_token') || '';
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -689,14 +676,31 @@
             }
             
             // Check auth state
-            auth.onAuthStateChanged((user) => {
-                if (user) {
-                    currentUser = user;
-                    showChat();
-                    document.getElementById('user-email').textContent = user.email;
-                }
-            });
+            if (authToken) {
+                verifyToken();
+            }
         });
+
+        // Auth Functions
+        async function verifyToken() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    showChat();
+                    document.getElementById('user-email').textContent = currentUser.email;
+                } else {
+                    // Token invalid, clear
+                    localStorage.removeItem('auth_token');
+                    authToken = '';
+                }
+            } catch (error) {
+                console.error('Verify error:', error);
+            }
+        }
 
         // Auth Functions
         function showAuth(mode) {
@@ -744,15 +748,32 @@
             btn.textContent = 'စောင့်ပါရန်...';
             
             try {
+                const endpoint = authMode === 'register' ? '/auth/register' : '/auth/login';
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'မှားယွင်းပါရန်။');
+                }
+                
                 if (authMode === 'register') {
-                    await auth.createUserWithEmailAndPassword(email, password);
                     showToast('မှတ်ပုံတင်ပါရန်။ ဝင်ရောက်ပါပါရန်။');
                     showAuth('login');
                 } else {
-                    await auth.signInWithEmailAndPassword(email, password);
+                    // Login successful - save token
+                    authToken = data.user.token;
+                    localStorage.setItem('auth_token', authToken);
+                    currentUser = data.user;
+                    showChat();
+                    document.getElementById('user-email').textContent = currentUser.email;
                 }
             } catch (error) {
-                showAuthError(getAuthErrorMessage(error.code));
+                showAuthError(error.message);
             }
             
             btn.disabled = false;
@@ -766,28 +787,30 @@
             const email = document.getElementById('reset-email').value;
             
             try {
-                await auth.sendPasswordResetEmail(email);
+                const response = await fetch(`${API_BASE}/auth/reset`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'မှားယွင်းပါရန်။');
+                }
+                
                 document.getElementById('reset-error').style.display = 'none';
-                document.getElementById('reset-success').textContent = 'ပါဆယ်လိုက်လင့်သည် အီးမေးလ်သို့ ပါဝင်ပါရန်။';
+                document.getElementById('reset-success').textContent = data.message;
                 document.getElementById('reset-success').style.display = 'block';
             } catch (error) {
                 document.getElementById('reset-success').style.display = 'none';
-                document.getElementById('reset-error').textContent = getAuthErrorMessage(error.code);
+                document.getElementById('reset-error').textContent = error.message;
                 document.getElementById('reset-error').style.display = 'block';
             }
         }
 
         function getAuthErrorMessage(code) {
-            const messages = {
-                'auth/email-already-in-use': 'ဤအီးမေးလ်သည် ရှိပြီးပါရန်။',
-                'auth/invalid-email': 'အီးမေးလ်ပါးလို့မရပါရန်။',
-                'auth/weak-password': 'စကားဝှက်သည် အားနည်းပါရန်။ အနည်းဆုံး စာလုံး ၆ လုံးလိုအပ်ပါရန်။',
-                'auth/user-not-found': 'ဤအီးမေးလ်သည် မရှိပါရန်။',
-                'auth/wrong-password': 'စကားဝှက်မှားယွင်းပါရန်။',
-                'auth/invalid-credential': 'အီးမေးလ်သို့မဟုတ်စကားဝှက်မှားယွင်းပါရန်။',
-                'auth/too-many-requests': 'အလွန်အကျွံကြိုးစားပါရန်။ နောက်တစ်ခါ ကြိုးစားပါရန်။'
-            };
-            return messages[code] || 'မှားယွင်းပါရန်။ နောက်တစ်ခါ ကြိုးစားပါရန်။';
+            return code || 'မှားယွင်းပါရန်။ နောက်တစ်ခါ ကြိုးစားပါရန်။';
         }
 
         function showAuthError(message) {
@@ -810,7 +833,10 @@
 
         async function logout() {
             try {
-                await auth.signOut();
+                // Clear local storage
+                localStorage.removeItem('auth_token');
+                authToken = '';
+                currentUser = null;
                 document.getElementById('chat-container').innerHTML = `
                     <div class="message ai">
                         မင်္ဂလာမှတ်ပါရန်။ ကျွန်တော်သည် သင့်အကူအညီဖြစ်ပါရန်။ မြန်မာစကားနှင့် ပြောဆိုပါရန်။

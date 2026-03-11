@@ -1,63 +1,62 @@
-const chatService = require('../services/chatService');
-const userService = require('../services/userService');
+// Simple Chat Controller (In-Memory)
+const { chatWithGemini } = require('../services/geminiService');
+const { memoryStorage, memoryInsertOne, memoryFind } = require('../config/database');
 
-// POST /api/chat - Send message
+// POST /api/chat/message - Send message to Gemini
 exports.sendMessage = async (req, res, next) => {
   try {
-    const { message, sessionId } = req.body;
+    const { message } = req.body;
     const userId = req.user.uid;
-    
-    // Validate input
+
     if (!message) {
-      return res.status(400).json({ error: 'စာရိုက်ပါရန်။' });
+      return res.status(400).json({ error: 'မေးခွန်းရိုက်ပါရန်။' });
     }
 
-    // Get user API key
-    const user = await userService.getUser(userId);
-    if (!user || !user.apiKey) {
-      return res.status(400).json({ error: 'API Key မထည့်သွင်းရသေးပါရန်။' });
-    }
+    // Get AI response from Gemini
+    const aiResponse = await chatWithGemini(message);
 
-    // Generate session ID if not provided
-    const chatSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Save to memory storage
+    memoryInsertOne('messages', {
+      userId,
+      message,
+      response: aiResponse,
+      timestamp: new Date()
+    });
 
-    // Send message
-    const result = await chatService.sendMessage(chatSessionId, message, user.apiKey, userId);
-
-    res.json(result);
+    res.json({ response: aiResponse });
   } catch (error) {
-    console.error('Send Message Error:', error.message);
-    res.status(500).json({ error: error.message || 'မှားယွင်းပါရန်။' });
+    console.error('Chat Error:', error.message);
+    res.status(500).json({ error: 'မှားယွင်းပါရန်။' });
   }
 };
 
-// GET /api/chat/history/:sessionId - Get chat history
+// GET /api/chat/history - Get chat history
 exports.getHistory = async (req, res, next) => {
   try {
-    const { sessionId } = req.params;
     const userId = req.user.uid;
-
-    const history = await chatService.getHistory(sessionId, userId);
-    res.json(history);
+    
+    const messages = memoryFind('messages', { userId }, { limit: 50 });
+    
+    res.json({ messages });
   } catch (error) {
     console.error('Get History Error:', error.message);
     res.status(500).json({ error: 'မှားယွင်းပါရန်။' });
   }
 };
 
-// POST /api/chat/clear/:sessionId - Clear chat history
+// POST /api/chat/clear - Clear chat history
 exports.clearHistory = async (req, res, next) => {
   try {
-    const { sessionId } = req.params;
     const userId = req.user.uid;
-
-    const result = await chatService.clearHistory(sessionId, userId);
     
-    if (result) {
-      res.json({ message: 'စကားပြောခန်းဖျက်ပါရန်။' });
-    } else {
-      res.status(404).json({ error: 'စကားပြောခန်းမရှိပါရန်။' });
-    }
+    // Clear messages for this user
+    memoryStorage.messages.forEach((msg, key) => {
+      if (msg.userId === userId) {
+        memoryStorage.messages.delete(key);
+      }
+    });
+    
+    res.json({ message: 'စကားဝှက်ရှင်းပါရန်။' });
   } catch (error) {
     console.error('Clear History Error:', error.message);
     res.status(500).json({ error: 'မှားယွင်းပါရန်။' });

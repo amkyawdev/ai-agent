@@ -36,13 +36,12 @@ app.use(requestLogger);
 
 // Health check
 app.get('/api/health', async (req, res) => {
-  try {
-    const db = require('./config/database').getDB();
-    await db.admin().ping();
-    res.json({ status: 'ok', database: 'connected', timestamp: new Date().toISOString() });
-  } catch (error) {
-    res.json({ status: 'ok', database: 'disconnected', timestamp: new Date().toISOString() });
-  }
+  const { isUsingMemory } = require('./config/database');
+  res.json({ 
+    status: 'ok', 
+    database: isUsingMemory() ? 'in-memory' : 'connected', 
+    timestamp: new Date().toISOString() 
+  });
 });
 
 // Routes
