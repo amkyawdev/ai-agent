@@ -13,12 +13,28 @@ const validateRequest = (req, res, next) => {
   next();
 };
 
-// POST /api/chat - Send message
+// POST /api/chat - Send message (Chat Mode)
 router.post('/', 
   verifyToken,
   body('message').trim().notEmpty().withMessage('စာရိုက်ပါရန်။'),
   validateRequest,
   chatController.sendMessage
+);
+
+// POST /api/chat/code - Code Generation
+router.post('/code', 
+  verifyToken,
+  body('message').trim().notEmpty().withMessage('စာရိုက်ပါရန်။'),
+  validateRequest,
+  chatController.sendCode
+);
+
+// POST /api/chat/image - Image Generation
+router.post('/image', 
+  verifyToken,
+  body('prompt').trim().notEmpty().withMessage('ပုံဖန်တီးမည့်စာရိုက်ပါရန်။'),
+  validateRequest,
+  chatController.generateImage
 );
 
 // GET /api/chat/history - Get chat history
