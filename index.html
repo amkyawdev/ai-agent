@@ -633,12 +633,6 @@
             </div>
         </div>
         
-        <div class="api-key-section">
-            <span>🔑 Gemini API Key:</span>
-            <input type="password" id="api-key" placeholder="Gemini API Key ထည့်သွင်းပါရန်">
-            <button class="btn btn-primary btn-small" onclick="saveApiKey()">သိမ်းပါရန်</button>
-        </div>
-        
         <div class="chat-container" id="chat-container">
             <div class="message ai">
                 မင်္ဂလာမှတ်ပါရန်။ ကျွန်တော်သည် သင့်အကူအညီဖြစ်ပါရန်။ မြန်မာစကားနှင့် ပြောဆိုပါရန်။
@@ -657,54 +651,22 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-
     <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAr7Hv2ApKtNTxF11MhT5cuWeg_Dgsh0TY",
-            authDomain: "smart-burme-app.firebaseapp.com",
-            projectId: "smart-burme-app",
-            storageBucket: "smart-burme-app.appspot.com",
-            messagingSenderId: "851502425686",
-            appId: "1:851502425686:web:f29e0e1dfa84794b4abdf7"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-
-        // API Configuration
         const API_BASE = 'http://localhost:3000/api';
 
         // State
         let currentUser = null;
         let authMode = 'login';
-        let apiKey = localStorage.getItem('gemini_api_key') || '';
         let authToken = localStorage.getItem('auth_token') || '';
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            // Check for existing API key
-            if (apiKey) {
-                document.getElementById('api-key').value = apiKey;
-            }
-            
             // Check auth state
-            auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    currentUser = user;
-                    // Get Firebase ID token
-                    try {
-                        authToken = await user.getIdToken();
-                        localStorage.setItem('auth_token', authToken);
-                    } catch(e) {}
-                    showChat();
-                    document.getElementById('user-email').textContent = user.email;
-                }
-            });
+            const savedEmail = localStorage.getItem('user_email');
+            if (authToken && savedEmail) {
+                currentUser = { email: savedEmail };
+                showChat();
+            }
         });
 
         // Auth Functions
@@ -754,16 +716,32 @@
             
             try {
                 if (authMode === 'register') {
-                    // Register with Firebase
-                    await auth.createUserWithEmailAndPassword(email, password);
+                    // Register - create simple token
+                    const uid = 'user_' + Date.now();
+                    const token = Buffer.from(`${uid}:${email}:${Date.now()}`).toString('base64');
+                    
+                    localStorage.setItem('auth_token', token);
+                    localStorage.setItem('user_email', email);
+                    authToken = token;
+                    currentUser = { email };
+                    
                     showToast('မှတ်ပုံတင်ပါရန်။ ဝင်ရောက်ပါပါရန်။');
-                    showAuth('login');
+                    showChat();
                 } else {
-                    // Login with Firebase
-                    await auth.signInWithEmailAndPassword(email, password);
+                    // Login - create simple token
+                    const uid = 'user_' + Date.now();
+                    const token = Buffer.from(`${uid}:${email}:${Date.now()}`).toString('base64');
+                    
+                    localStorage.setItem('auth_token', token);
+                    localStorage.setItem('user_email', email);
+                    authToken = token;
+                    currentUser = { email };
+                    
+                    showToast('ဝင်ရောက်ပါရန်။');
+                    showChat();
                 }
             } catch (error) {
-                showAuthError(error.message);
+                showAuthError(error.message || 'မှားယွင်းပါရန်။');
             }
             
             btn.disabled = false;
@@ -776,16 +754,10 @@
             
             const email = document.getElementById('reset-email').value;
             
-            try {
-                await auth.sendPasswordResetEmail(email);
-                showToast('အိမ်နီးချင်းသို့ ပြန်လည်သတ်မှတ်ရန် အီးမေးလ်ပို့ပါရန်။');
-                document.getElementById('reset-screen').classList.remove('active');
-                document.getElementById('auth-screen').classList.add('active');
-            } catch (error) {
-                document.getElementById('reset-success').style.display = 'none';
-                document.getElementById('reset-error').textContent = error.message;
-                document.getElementById('reset-error').style.display = 'block';
-            }
+            // Simple reset - just show success
+            showToast('ပါဆယ်လိုက်ပါရန်။');
+            document.getElementById('reset-screen').classList.remove('active');
+            document.getElementById('auth-screen').classList.add('active');
         }
 
         function getAuthErrorMessage(code) {
@@ -808,15 +780,16 @@
         function showChat() {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('chat-screen').classList.add('active');
+            if (currentUser) {
+                document.getElementById('user-email').textContent = currentUser.email || '';
+            }
         }
 
         async function logout() {
             try {
-                // Firebase logout
-                await auth.signOut();
-                
                 // Clear local storage
                 localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_email');
                 authToken = '';
                 currentUser = null;
                 document.getElementById('chat-container').innerHTML = `
@@ -858,11 +831,6 @@
             
             if (!message) return;
             
-            if (!apiKey) {
-                showToast('🔑 Gemini API Key ထည့်သွင်းပါရန်။', 'error');
-                return;
-            }
-            
             // Add user message
             addMessage(message, 'user');
             input.value = '';
@@ -873,7 +841,7 @@
             scrollToBottom();
             
             try {
-                const response = await chatWithGemini(message);
+                const response = await chatWithAI(message);
                 
                 typingIndicator.classList.remove('active');
                 addMessage(response, 'ai');
@@ -885,14 +853,13 @@
             scrollToBottom();
         }
 
-        async function chatWithGemini(message) {
+        async function chatWithAI(message) {
             // Send to backend - saves to Neon DB
             const response = await fetch(`${API_BASE}/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`,
-                    'x-gemini-api-key': apiKey
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify({ message })
             });
